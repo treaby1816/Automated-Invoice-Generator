@@ -234,41 +234,35 @@ Private Function SafeFileName(ByVal s As String) As String
 End Function
 
 Public Sub InsertLogo()
-    Dim fd As FileDialog
-    Dim shp As Shape
-    Dim targetRange As Range
+    Dim picPath As Variant
+    picPath = Application.GetOpenFilename("Image Files (*.jpg; *.jpeg; *.png; *.bmp), *.jpg; *.jpeg; *.png; *.bmp", 1, "Select Your Company Logo")
     
-    Set fd = Application.FileDialog(msoFileDialogFilePicker)
-    With fd
-        .Title = "Select Your Company Logo"
-        .Filters.Add "Images", "*.jpg; *.jpeg; *.png; *.bmp", 1
-        If .Show = -1 Then
-            On Error Resume Next
-            Set shp = ActiveSheet.Shapes("LogoPlaceholder")
-            Dim sLeft As Double: sLeft = shp.Left
-            Dim sTop As Double: sTop = shp.Top
-            Dim sWidth As Double: sWidth = shp.Width
-            Dim sHeight As Double: sHeight = shp.Height
-            shp.Delete
-            On Error GoTo 0
-            
-            Dim pic As Shape
-            Set pic = ActiveSheet.Shapes.AddPicture(.SelectedItems(1), _
-                msoFalse, msoTrue, sLeft, sTop, -1, -1)
-            pic.Name = "CompanyLogo"
-            pic.LockAspectRatio = msoTrue
-            
-            If pic.Width / sWidth > pic.Height / sHeight Then
-                pic.Width = sWidth
-            Else
-                pic.Height = sHeight
-            End If
-            
-            pic.Left = sLeft + (sWidth - pic.Width) / 2
-            pic.Top = sTop + (sHeight - pic.Height) / 2
-            pic.OnAction = "InsertLogo"
-        End If
-    End With
+    If picPath = False Then Exit Sub
+    
+    On Error Resume Next
+    Dim shp As Shape
+    Set shp = ActiveSheet.Shapes("LogoPlaceholder")
+    Dim sLeft As Double: sLeft = shp.Left
+    Dim sTop As Double: sTop = shp.Top
+    Dim sWidth As Double: sWidth = shp.Width
+    Dim sHeight As Double: sHeight = shp.Height
+    shp.Delete
+    On Error GoTo 0
+    
+    Dim pic As Shape
+    Set pic = ActiveSheet.Shapes.AddPicture(picPath, msoFalse, msoTrue, sLeft, sTop, -1, -1)
+    pic.Name = "CompanyLogo"
+    pic.LockAspectRatio = msoTrue
+    
+    If pic.Width / sWidth > pic.Height / sHeight Then
+        pic.Width = sWidth
+    Else
+        pic.Height = sHeight
+    End If
+    
+    pic.Left = sLeft + (sWidth - pic.Width) / 2
+    pic.Top = sTop + (sHeight - pic.Height) / 2
+    pic.OnAction = "InsertLogo"
 End Sub
 
 Public Sub ApplySettings()

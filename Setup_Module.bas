@@ -253,11 +253,11 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("A1:F2").Interior.Color = RGB(31, 73, 125)
         
         Dim shp As Shape
-        Set shp = .Shapes.AddShape(msoShapeRoundedRectangle, .Range("B1").Left - 10, .Range("B1").Top + 5, 80, 60)
+        Set shp = .Shapes.AddShape(msoShapeRoundedRectangle, .Range("A1").Left + 10, .Range("A1").Top + 10, 60, 45)
         With shp
             .Name = "LogoPlaceholder"
-            .TextFrame2.TextRange.Text = "CLICK TO" & vbNewLine & "ADD LOGO"
-            .TextFrame2.TextRange.Font.Size = 9: .TextFrame2.TextRange.Font.Bold = msoTrue
+            .TextFrame2.TextRange.Text = "ADD LOGO"
+            .TextFrame2.TextRange.Font.Size = 8: .TextFrame2.TextRange.Font.Bold = msoTrue
             .TextFrame2.TextRange.Font.Fill.ForeColor.RGB = RGB(31, 73, 125)
             .TextFrame2.VerticalAnchor = msoAnchorMiddle
             .TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
@@ -269,6 +269,7 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("C1:E2").Merge: .Range("C1").Formula = "=Settings!B2"
         .Range("C1").Font.Color = vbWhite: .Range("C1").Font.Size = 22: .Range("C1").Font.Bold = True
         .Range("C1").HorizontalAlignment = xlCenter: .Range("C1").VerticalAlignment = xlCenter
+        .Range("C1").ShrinkToFit = True
         
         .Range("F1:F2").Merge: .Range("F1").Value = "INVOICE"
         .Range("F1").Font.Color = vbWhite: .Range("F1").Font.Size = 24: .Range("F1").Font.Bold = True
