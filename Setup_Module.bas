@@ -134,6 +134,7 @@ Private Sub BuildInventory(ws As Worksheet)
         Set fc = .Range("I2:I1000").FormatConditions.Add(Type:=xlCellValue, Operator:=xlEqual, Formula1:="=""IN STOCK""")
         fc.Interior.Color = RGB(40, 167, 69): fc.Font.Color = vbWhite: fc.Font.Bold = True
         
+        ws.Activate
         ActiveWindow.FreezePanes = False
         .Rows("2:2").Select
         ActiveWindow.FreezePanes = True
