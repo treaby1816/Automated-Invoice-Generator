@@ -254,9 +254,18 @@ Public Sub InsertLogo()
             
             Dim pic As Shape
             Set pic = ActiveSheet.Shapes.AddPicture(.SelectedItems(1), _
-                msoFalse, msoTrue, sLeft, sTop, sWidth, sHeight)
+                msoFalse, msoTrue, sLeft, sTop, -1, -1)
             pic.Name = "CompanyLogo"
             pic.LockAspectRatio = msoTrue
+            
+            If pic.Width / sWidth > pic.Height / sHeight Then
+                pic.Width = sWidth
+            Else
+                pic.Height = sHeight
+            End If
+            
+            pic.Left = sLeft + (sWidth - pic.Width) / 2
+            pic.Top = sTop + (sHeight - pic.Height) / 2
             pic.OnAction = "InsertLogo"
         End If
     End With
