@@ -93,17 +93,17 @@ End Sub
 Public Sub SaveAsPDF()
     Dim wsInv As Worksheet: Set wsInv = ThisWorkbook.Sheets("Invoice")
     Dim invoiceID As String: invoiceID = wsInv.Range("F2").Value
-    Dim clientName As String: clientName = wsInv.Range("B10").Value
+    Dim clientName As String: clientName = wsInv.Range("A9").Value
     If clientName = "" Or clientName = "Client / Company Name" Then clientName = "Unknown_Client"
     
     Dim pdfPath As String
-    pdfPath = Environ("USERPROFILE") & "\Desktop\" & invoiceID & "_" & SafeFileName(clientName) & ".pdf"
+    pdfPath = ThisWorkbook.Path & "\" & invoiceID & "_" & SafeFileName(clientName) & ".pdf"
     
     On Error Resume Next
     wsInv.ExportAsFixedFormat Type:=xlTypePDF, Filename:=pdfPath, Quality:=xlQualityStandard, _
         IncludeDocProperties:=True, IgnorePrintAreas:=False, OpenAfterPublish:=True
     If Err.Number = 0 Then
-        MsgBox "PDF saved to Desktop!", vbInformation
+        MsgBox "PDF saved successfully in the same folder as this workbook!", vbInformation
     Else
         MsgBox "Failed to save PDF.", vbCritical
     End If
@@ -119,7 +119,7 @@ Public Sub ClearForm()
     Dim defaultLabels As Variant: defaultLabels = Array("Client / Company Name", "Street Address", "City, State", "Phone", "Email")
     Dim i As Integer
     For i = 0 To 4
-        wsInv.Cells(10 + i, 2).Value = defaultLabels(i)
+        wsInv.Cells(9 + i, 1).Value = defaultLabels(i)
     Next i
 End Sub
 
@@ -136,9 +136,9 @@ Public Sub SaveRecord()
     Dim wsRec As Worksheet: Set wsRec = ThisWorkbook.Sheets("Records")
     Dim wsSet As Worksheet: Set wsSet = ThisWorkbook.Sheets("Settings")
 
-    If Trim(wsInv.Range("B10").Value) = "" Or Trim(wsInv.Range("B10").Value) = "Client / Company Name" Then
-        MsgBox "Please enter a valid Client Name in B10.", vbExclamation, "Validation Error"
-        Exit Sub
+    Dim cName As String: cName = Trim(wsInv.Range("A9").Value)
+    If cName = "" Or cName = "Client / Company Name" Then
+        cName = "Walk-in Customer"
     End If
 
     Dim r As Long
@@ -189,7 +189,7 @@ Public Sub SaveRecord()
     Dim nr As Long: nr = wsRec.Cells(wsRec.Rows.Count, "A").End(xlUp).Row + 1
     wsRec.Cells(nr, 1).Value = invoiceID
     wsRec.Cells(nr, 2).Value = wsInv.Range("F3").Value
-    wsRec.Cells(nr, 3).Value = wsInv.Range("B10").Value
+    wsRec.Cells(nr, 3).Value = cName
     wsRec.Cells(nr, 4).Value = ""
     wsRec.Cells(nr, 5).Value = wsInv.Range("F35").Value
     wsRec.Cells(nr, 6).Value = itemCount
