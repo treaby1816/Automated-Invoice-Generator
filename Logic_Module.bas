@@ -86,7 +86,7 @@ End Sub
 
 Public Sub PrintInvoice()
     On Error Resume Next
-    ThisWorkbook.Sheets("Invoice").PrintOut
+    ThisWorkbook.Sheets("Invoice").PrintPreview
     On Error GoTo 0
 End Sub
 
