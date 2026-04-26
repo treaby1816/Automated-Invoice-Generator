@@ -423,6 +423,7 @@ Private Sub BuildDashboard(ws As Worksheet)
     With ws
         .Tab.Color = RGB(21, 21, 21)
         .Columns("A").ColumnWidth = 2
+        .Columns("B:L").ColumnWidth = 15
         .Range("B1:L3").Merge: .Range("B1").Value = "INVENTORY & SALES DASHBOARD"
         .Range("B1").Interior.Color = RGB(21, 21, 21): .Range("B1").Font.Color = vbWhite
         .Range("B1").Font.Size = 20: .Range("B1").Font.Bold = True
