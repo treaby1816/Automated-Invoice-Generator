@@ -1,4 +1,3 @@
-Attribute VB_Name = "Setup_Module"
 Option Explicit
 
 Private Function Navy() As Long: Navy = RGB(31, 56, 100): End Function
@@ -11,16 +10,28 @@ Private Function N() As String: N = ChrW(8358): End Function
 Public Sub SetupInvoiceSystem()
     Application.ScreenUpdating = False
     Application.DisplayAlerts = False
+    Application.EnableEvents = False
+    Application.Calculation = xlCalculationManual
     
     Dim wb As Workbook: Set wb = ThisWorkbook
-    Dim wI As Worksheet: Set wI = wb.Sheets(1)
+    Dim ws As Worksheet
     
-    ' Clear Invoice first to prevent reference errors when deleting sheets
-    wI.Cells.Clear: wI.Cells.ClearFormats
+    For Each ws In wb.Worksheets
+        On Error Resume Next
+        ws.Visible = xlSheetVisible
+        On Error GoTo 0
+    Next ws
+    
+    Dim wI As Worksheet: Set wI = wb.Sheets(1)
+    wI.Cells.Clear
     Dim shp As Shape
     For Each shp In wI.Shapes: shp.Delete: Next shp
     
-    Do While wb.Sheets.Count > 1: wb.Sheets(wb.Sheets.Count).Delete: Loop
+    Do While wb.Sheets.Count > 1
+        On Error Resume Next
+        wb.Sheets(wb.Sheets.Count).Delete
+        On Error GoTo 0
+    Loop
     wI.Name = "Invoice"
     
     Dim wsDash As Worksheet: Set wsDash = wb.Sheets.Add(Before:=wI): wsDash.Name = "Dashboard"
@@ -39,13 +50,13 @@ Public Sub SetupInvoiceSystem()
     Call BuildDashboard(wsDash)
     
     wsLic.Visible = xlSheetVeryHidden
-    wsDash.Activate
-    ActiveWindow.DisplayGridlines = False
     
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
+    Application.EnableEvents = True
+    Application.Calculation = xlCalculationAutomatic
     
-    ' Safely freeze panes AFTER screen updating is turned back on
+    On Error Resume Next
     Dim freezeSheets As Variant
     freezeSheets = Array("Inventory", "StockIn", "Records")
     Dim shName As Variant
@@ -55,44 +66,52 @@ Public Sub SetupInvoiceSystem()
         ActiveWindow.SplitRow = 1
         ActiveWindow.FreezePanes = True
     Next shName
+    On Error GoTo 0
     
-    wsDash.Activate ' Return to dashboard
+    wsDash.Activate
+    ActiveWindow.DisplayGridlines = False
     
-    MsgBox "Invoice & Inventory Management System setup complete!" & vbCrLf & _
-           "Please complete the Developer Deployment Checklist in Module2.", vbInformation, "Setup Complete"
+    MsgBox "Invoice & Inventory Management System setup complete!", vbInformation, "Setup Complete"
 End Sub
 
 Private Sub BuildSettings(ws As Worksheet)
     With ws
-        .Columns("A").ColumnWidth = 24: .Columns("B").ColumnWidth = 32
+        .Columns("A").ColumnWidth = 24: .Columns("B").ColumnWidth = 40
         .Columns("D").ColumnWidth = 20
         .Range("A1:B1").Merge: .Range("A1").Value = "COMPANY SETTINGS"
         .Range("A1").Font.Bold = True: .Range("A1").Font.Size = 13
         .Range("A1").Font.Color = vbWhite: .Range("A1:B1").Interior.Color = Navy()
         .Range("A1").HorizontalAlignment = xlCenter
         
-        Dim L As Variant: L = Array("Company Name", "Address Line 1", "Address Line 2", "Phone", "Email", "Next Invoice Number", "Next Stock-In Reference", "VAT Rate", "Invoice Prefix", "Stock-In Prefix", "Low Stock Threshold", "Currency Symbol")
-        Dim V As Variant: V = Array("Moresta Signature", "Ondo City, Ondo State", "Nigeria", "+234 000 000 0000", "morestasignature@gmail.com", 1, 1, 0.075, "INV-", "STK-", 10, N())
+        Dim L As Variant: L = Array("Company Name", "Address Line 1", "Address Line 2", "Phone", "Email", "Website", "RC Number", "Bank Name", "Account Name", "Account Number", "Sort Code", "Default VAT (%)", "Invoice Prefix", "Next Invoice #", "Payment Terms (days)", "Stock-In Prefix", "Next Stock-In Reference", "Low Stock Threshold", "Currency Symbol")
+        Dim V As Variant: V = Array("BeFed Catering & Events", "3, Ibiyemi Ajadi Close", "Abeokuta, Ogun, Nigeria", "+234 800 000 0000", "info@yourcompany.com", "www.yourcompany.com", "RC 123456", "First Bank of Nigeria", "Your Company Name", "1234567890", "011", 7.5, "INV-", 1, 30, "STK-", 1, 10, N())
+        
         Dim i As Long
-        For i = 0 To 11
+        For i = 0 To UBound(L)
             .Cells(i + 2, 1).Value = L(i): .Cells(i + 2, 1).Font.Bold = True
             .Cells(i + 2, 2).Value = V(i)
         Next i
         
-        .Range("A2:A13").Interior.Color = RGB(245, 245, 245)
-        .Range("B2:B13").Interior.Color = EFill()
-        .Range("A2:B13").Borders.LineStyle = xlContinuous
-        .Range("B7").NumberFormat = "0": .Range("B8").NumberFormat = "0.00"
-        .Range("B12").NumberFormat = "0"
+        Dim lastRow As Long: lastRow = UBound(L) + 2
+        .Range("A2:A" & lastRow).Interior.Color = vbWhite
+        .Range("B2:B" & lastRow).Interior.Color = EFill()
+        .Range("A2:B" & lastRow).Borders.LineStyle = xlContinuous
+        .Range("A2:B" & lastRow).RowHeight = 20
         
-        ' Categories
+        .Range("B13").NumberFormat = "0.0"
+        
+        Dim btn As Object
+        Set btn = .Buttons.Add(.Range("A" & lastRow + 2).Left, .Range("A" & lastRow + 2).Top, .Range("A" & lastRow + 2 & ":B" & lastRow + 2).Width, 25)
+        btn.Caption = "Apply Settings"
+        btn.OnAction = "ApplySettings"
+        
         .Range("D1").Value = "CATEGORIES"
         .Range("D1").Font.Bold = True: .Range("D1").Font.Color = vbWhite: .Range("D1").Interior.Color = Navy()
-        Dim cats As Variant: cats = Array("Electronics", "Clothing", "Food & Beverage", "Pharmaceuticals", "Stationery", "Furniture", "Cosmetics", "Automotive", "Agriculture", "Other")
+        Dim cats As Variant: cats = Array("Food", "Drinks", "Rentals", "Service", "Decor", "Logistics", "Other")
         For i = 0 To UBound(cats)
             .Cells(i + 2, 4).Value = cats(i)
         Next i
-        .Range("D2:D11").Borders.LineStyle = xlContinuous
+        .Range("D2:D8").Borders.LineStyle = xlContinuous
     End With
 End Sub
 
@@ -121,24 +140,22 @@ Private Sub BuildInventory(ws As Worksheet)
             .HorizontalAlignment = xlCenter
         End With
         
-        ' Create Table
         Dim lo As ListObject
         Set lo = .ListObjects.Add(xlSrcRange, .Range("A1:J2"), , xlYes)
         lo.Name = "tblInventory"
         lo.TableStyle = "TableStyleMedium2"
         
-        ' Data Validation for Category
         With .Range("C2:C1000").Validation
             .Delete
-            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=Settings!$D$2:$D$11"
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=Settings!$D$2:$D$8"
         End With
         
         .Range("E2:E1000").NumberFormat = "#,##0.00"
-        .Range("H2:H1000").Formula = "=IF([@[Product Name]]="""","""",[@[Total Stock Added]]-[@[Total Stock Sold]])"
-        .Range("I2:I1000").Formula = "=IF([@[Current Stock]]<=0,""OUT OF STOCK"",IF([@[Current Stock]]<=Settings!$B$12,""LOW STOCK"",""IN STOCK""))"
+        Dim q As String: q = Chr(34)
+        .Range("H2").Formula = "=IF([@[Product Name]]=" & q & q & "," & q & q & ",[@[Total Stock Added]]-[@[Total Stock Sold]])"
+        .Range("I2").Formula = "=IF([@[Current Stock]]<=0," & q & "OUT OF STOCK" & q & ",IF([@[Current Stock]]<=Settings!$B$19," & q & "LOW STOCK" & q & "," & q & "IN STOCK" & q & "))"
         
-        ' Conditional Formatting for Status
-        Dim fc As FormatCondition
+        Dim fc As Object
         .Range("I2:I1000").FormatConditions.Delete
         Set fc = .Range("I2:I1000").FormatConditions.Add(Type:=xlCellValue, Operator:=xlEqual, Formula1:="=""OUT OF STOCK""")
         fc.Interior.Color = RGB(220, 53, 69): fc.Font.Color = vbWhite: fc.Font.Bold = True
@@ -151,7 +168,6 @@ End Sub
 
 Private Sub BuildStockIn(ws As Worksheet)
     With ws
-        ' --- IN-SHEET FORM FOR ADDING STOCK ---
         .Columns("B").ColumnWidth = 4: .Columns("C").ColumnWidth = 20: .Columns("D").ColumnWidth = 30
         .Range("C2:D2").Merge: .Range("C2").Value = "ADD STOCK / NEW PRODUCT"
         .Range("C2").Font.Bold = True: .Range("C2").Font.Size = 14: .Range("C2").Font.Color = vbWhite
@@ -165,19 +181,17 @@ Private Sub BuildStockIn(ws As Worksheet)
             .Cells(i + 4, 4).Borders.LineStyle = xlContinuous
         Next i
         
-        With .Range("D5").Validation ' Category Dropdown
+        With .Range("D5").Validation
             .Delete
-            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=Settings!$D$2:$D$11"
+            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=Settings!$D$2:$D$8"
         End With
         
-        ' Add Stock Button
         Dim btn As Object
         Set btn = .Buttons.Add(.Range("C10").Left, .Range("C10").Top, .Range("C10:D10").Width, 30)
         btn.Caption = "ADD TO STOCK"
         btn.OnAction = "AddStockItem"
         btn.Font.Bold = True
         
-        ' --- LEDGER TABLE ---
         .Range("A13").Value = "Stock-In Ref"
         .Range("B13").Value = "Date"
         .Range("C13").Value = "Product ID"
@@ -226,166 +240,168 @@ Private Sub BuildRecords(ws As Worksheet)
 End Sub
 
 Private Sub BuildInvoice(ws As Worksheet)
-    ' This preserves the premium layout but integrates the VLOOKUPs and Stock Remaining column
     With ws
-        .Columns("A").ColumnWidth = 4: .Columns("B").ColumnWidth = 14
-        .Columns("C").ColumnWidth = 26: .Columns("D").ColumnWidth = 8
-        .Columns("E").ColumnWidth = 12: .Columns("F").ColumnWidth = 14: .Columns("G").ColumnWidth = 14
+        .Cells.Clear
+        Dim shpOld As Shape
+        For Each shpOld In .Shapes: shpOld.Delete: Next shpOld
 
-        ' === TOP ACCENT LINE ===
-        .Range("A1:G1").Interior.Color = Navy(): .Range("A1:G1").RowHeight = 5
+        .Columns("A").ColumnWidth = 3: .Columns("B").ColumnWidth = 27
+        .Columns("C").ColumnWidth = 10: .Columns("D").ColumnWidth = 10
+        .Columns("E").ColumnWidth = 16: .Columns("F").ColumnWidth = 18
+        
+        .Rows("1:2").RowHeight = 25
+        .Range("A1:F2").Interior.Color = RGB(31, 73, 125)
+        
+        .Range("A1:D2").Merge: .Range("A1").Formula = "=Settings!B2"
+        .Range("A1").Font.Color = vbWhite: .Range("A1").Font.Size = 22: .Range("A1").Font.Bold = True
+        .Range("A1").HorizontalAlignment = xlLeft: .Range("A1").VerticalAlignment = xlCenter
+        .Range("A1").IndentLevel = 1
+        
+        .Range("E1:F2").Merge: .Range("E1").Value = "INVOICE"
+        .Range("E1").Font.Color = vbWhite: .Range("E1").Font.Size = 26: .Range("E1").Font.Bold = True
+        .Range("E1").HorizontalAlignment = xlRight: .Range("E1").VerticalAlignment = xlCenter
+        
+        .Range("A3:D3").Merge: .Range("A3").Formula = "=Settings!B3"
+        .Range("A4:D4").Merge: .Range("A4").Formula = "=Settings!B4"
+        .Range("A5:D5").Merge: .Range("A5").Formula = "=""Phone: "" & Settings!B5"
+        .Range("A6:D6").Merge: .Range("A6").Formula = "=""RC Number: "" & Settings!B8"
+        .Range("A3:A6").Font.Size = 10: .Range("A3:A6").Font.Color = RGB(80, 80, 80)
+        
+        Dim meta As Variant: meta = Array("Invoice #:", "Invoice Date:", "Due Date:", "Status:")
+        Dim i As Integer
+        For i = 0 To 3
+            .Cells(3 + i, 5).Value = meta(i): .Cells(3 + i, 5).Font.Bold = True
+            .Cells(3 + i, 5).HorizontalAlignment = xlRight: .Cells(3 + i, 5).Font.Size = 10
+        Next i
+        
+        .Range("F3").Formula = "=Settings!B14&TEXT(Settings!B15,""0000"")"
+        .Range("F4").Formula = "=TEXT(TODAY(),""DD/MM/YYYY"")"
+        .Range("F5").Formula = "=TEXT(TODAY()+Settings!B16,""DD/MM/YYYY"")"
+        .Range("F6").Value = "UNPAID": .Range("F6").Font.Color = vbRed: .Range("F6").Font.Bold = True
+        .Range("F3:F6").HorizontalAlignment = xlRight: .Range("F3:F6").Font.Size = 10
 
-        ' === LOGO PLACEHOLDER ===
-        .Rows("2:3").RowHeight = 28
-        Dim logoShape As Shape
-        Set logoShape = .Shapes.AddShape(msoShapeRoundedRectangle, _
-            .Range("A2").Left + 2, .Range("A2").Top + 2, 60, 50)
-        With logoShape
-            .Name = "LogoPlaceholder"
-            .Fill.ForeColor.RGB = LFill()
-            .Line.ForeColor.RGB = Accent()
-            .Line.Weight = 1.5
-            .TextFrame2.TextRange.Text = "LOGO"
-            .TextFrame2.TextRange.Font.Size = 9
-            .TextFrame2.TextRange.Font.Fill.ForeColor.RGB = Accent()
-            .TextFrame2.TextRange.Font.Bold = msoTrue
-            .TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
-            .TextFrame2.VerticalAnchor = msoAnchorMiddle
-            .OnAction = "InsertLogo"
+        .Rows("7").RowHeight = 15
+
+        .Rows("8").RowHeight = 18
+        .Range("A8:D8").Merge: .Range("A8").Value = "BILL TO:": .Range("A8").Interior.Color = RGB(50, 120, 190)
+        .Range("E8:F8").Merge: .Range("E8").Value = "SHIP TO:": .Range("E8").Interior.Color = RGB(50, 120, 190)
+        .Range("A8, E8").Font.Color = vbWhite: .Range("A8, E8").Font.Bold = True: .Range("A8, E8").IndentLevel = 1
+        
+        Dim lb As Variant: lb = Array("Client / Company Name", "Street Address", "City, State", "Phone", "Email")
+        For i = 0 To 4
+            .Range(.Cells(9 + i, 1), .Cells(9 + i, 4)).Merge
+            .Cells(9 + i, 1).Value = lb(i): .Cells(9 + i, 1).Font.Color = RGB(180, 180, 180): .Cells(9 + i, 1).Font.Italic = True
+            .Range(.Cells(9 + i, 5), .Cells(9 + i, 6)).Merge
+            .Cells(9 + i, 5).Value = lb(i): .Cells(9 + i, 5).Font.Color = RGB(180, 180, 180): .Cells(9 + i, 5).Font.Italic = True
+        Next i
+
+        .Rows("14:15").RowHeight = 10
+
+        .Rows("16").RowHeight = 25
+        .Range("A16:F16").Interior.Color = RGB(230, 230, 230)
+        
+        With .Range("A16:B16").Borders(xlEdgeTop)
+            .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(0, 112, 192)
+        End With
+        With .Range("C16:D16").Borders(xlEdgeTop)
+            .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(0, 176, 80)
+        End With
+        With .Range("E16").Borders(xlEdgeTop)
+            .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(255, 0, 0)
+        End With
+        With .Range("F16").Borders(xlEdgeTop)
+            .LineStyle = xlContinuous: .Weight = xlThick: .Color = RGB(180, 180, 180)
+        End With
+        
+        Dim btn As Object
+        Dim tTop As Double: tTop = .Range("A16").Top + 4
+        Dim tHeight As Double: tHeight = 19
+
+        Set btn = ws.Buttons.Add(.Range("A16").Left, tTop, .Range("A16:B16").Width, tHeight)
+        btn.Caption = "Print Invoice": btn.OnAction = "PrintInvoice"
+        
+        Set btn = ws.Buttons.Add(.Range("C16").Left, tTop, .Range("C16:D16").Width, tHeight)
+        btn.Caption = "Save As PDF": btn.OnAction = "SaveAsPDF"
+        
+        Set btn = ws.Buttons.Add(.Range("E16").Left, tTop, .Range("E16").Width, tHeight)
+        btn.Caption = "Clear Form": btn.OnAction = "ClearForm"
+        
+        Dim wSm As Double: wSm = (.Range("F16").Width / 2)
+        
+        Set btn = ws.Buttons.Add(.Range("F16").Left, tTop, wSm, tHeight)
+        btn.Caption = "New Invoice": btn.OnAction = "NewInvoice"
+        
+        Set btn = ws.Buttons.Add(.Range("F16").Left + wSm, tTop, wSm, tHeight)
+        btn.Caption = "Save Record": btn.OnAction = "SaveRecord"
+
+        .Range("A17").Value = "#": .Range("B17:C17").Merge: .Range("B17").Value = "DESCRIPTION"
+        .Range("D17").Value = "QTY": .Range("E17").Value = "UNIT PRICE (" & N() & ")": .Range("F17").Value = "AMOUNT (" & N() & ")"
+        With .Range("A17:F17")
+            .Interior.Color = RGB(31, 73, 125): .Font.Color = vbWhite: .Font.Bold = True
+            .HorizontalAlignment = xlCenter
         End With
 
-        ' === HEADER ===
-        .Range("B2:D3").Merge: .Range("B2").Formula = "=Settings!B2"
-        .Range("B2").Font.Size = 20: .Range("B2").Font.Bold = True: .Range("B2").Font.Color = Navy()
-        .Range("B2").VerticalAlignment = xlCenter: .Range("B2").HorizontalAlignment = xlCenter
-        .Range("F2:G3").Merge: .Range("F2").Value = "INVOICE"
-        .Range("F2").Font.Size = 26: .Range("F2").Font.Bold = True: .Range("F2").Font.Color = Accent()
-        .Range("F2").HorizontalAlignment = xlRight: .Range("F2").VerticalAlignment = xlCenter
-
-        .Range("B4").Formula = "=Settings!B3": .Range("B5").Formula = "=Settings!B4"
-        .Range("B6").Formula = "=""Phone: ""&Settings!B5"
-        .Range("B4:B6").Font.Size = 9: .Range("B4:B6").Font.Color = RGB(80, 80, 80)
-
-        .Range("F4").Value = "Invoice #:": .Range("F5").Value = "Invoice Date:"
-        .Range("F6").Value = "Due Date:": .Range("F7").Value = "Status:"
-        .Range("F4:F7").Font.Bold = True: .Range("F4:F7").HorizontalAlignment = xlRight
-        .Range("F4:F7").Font.Size = 10
-
-        .Range("G4").Formula = "=Settings!B9&TEXT(Settings!B6,""0000"")"
-        .Range("G4").Font.Bold = True: .Range("G4").Font.Color = Accent(): .Range("G4").Font.Size = 12
-        .Range("G5").Formula = "=TEXT(TODAY(),""DD/MM/YYYY"")": .Range("G5").Font.Color = Accent()
-        .Range("G6").NumberFormat = "DD/MM/YYYY": .Range("G6").Font.Color = Accent()
-        .Range("G6").Interior.Color = RGB(255, 255, 153) ' Highlight due date
-        .Range("G7").Value = "UNPAID": .Range("G7").Font.Color = RGB(220, 20, 20): .Range("G7").Font.Bold = True
-        .Range("G4:G7").HorizontalAlignment = xlRight
-
-        ' === BILL TO / SHIP TO ===
-        .Range("A9:D9").Merge: .Range("A9").Value = "BILL TO:"
-        .Range("E9:G9").Merge: .Range("E9").Value = "SHIP TO:"
-        Dim lb As Variant: lb = Array("Client Name", "Client Company", "Street Address", "Phone", "Email")
-        Dim j As Long
-        For j = 0 To 4
-            .Cells(11 + j, 2).Value = lb(j): .Cells(11 + j, 5).Value = lb(j)
-            .Cells(11 + j, 2).Font.Color = RGB(180, 180, 180): .Cells(11 + j, 2).Font.Italic = True
-            .Cells(11 + j, 5).Font.Color = RGB(180, 180, 180): .Cells(11 + j, 5).Font.Italic = True
-        Next j
-
-        ' === ITEMS TABLE (Row 19 header, 20-31 data) ===
-        .Range("A19").Value = "#"
-        .Range("B19:C19").Merge: .Range("B19").Value = "PRODUCT NAME"
-        .Range("D19").Value = "QTY"
-        .Range("E19").Value = "UNIT PRICE (" & N() & ")"
-        .Range("F19").Value = "AMOUNT (" & N() & ")"
-        .Range("G19").Value = "STOCK REMAINING"
-        
-        Dim r As Long
-        For r = 20 To 31
-            .Cells(r, 1).Value = r - 19: .Cells(r, 1).HorizontalAlignment = xlCenter
-            .Range("B" & r & ":C" & r).Merge
+        Dim q2 As String: q2 = Chr(34)
+        For i = 18 To 28
+            .Cells(i, 1).Value = i - 17: .Cells(i, 1).HorizontalAlignment = xlCenter
+            .Range("B" & i & ":C" & i).Merge
             
-            ' Validation for Product Name
-            With .Range("B" & r).Validation
+            With .Range("B" & i).Validation
                 .Delete
-                .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=tblInventory[Product Name]"
+                .Add Type:=xlValidateList, AlertStyle:=xlValidAlertWarning, Formula1:="=INDIRECT(" & q2 & "tblInventory[Product Name]" & q2 & ")"
+                .ErrorTitle = "Item Not in Inventory"
+                .ErrorMessage = "This item is not in your Inventory. The price will not auto-fill. Please add it to the 'StockIn' sheet first."
+                .ShowError = True
             End With
             
-            .Cells(r, 4).Value = 0
-            ' Auto-fill Unit Price
-            .Cells(r, 5).Formula = "=IF(B" & r & "="""","""",IFERROR(VLOOKUP(B" & r & ",tblInventory[[Product Name]:[Unit Price (" & N() & ")]],4,0),""""))"
-            ' Auto Amount
-            .Cells(r, 6).Formula = "=IF(OR(D" & r & "="""",E" & r & "="""",D" & r & "=0,E" & r & "=0),"""",D" & r & "*E" & r & ")"
-            ' Live Stock Remaining
-            .Cells(r, 7).Formula = "=IF(B" & r & "="""","""",IFERROR(VLOOKUP(B" & r & ",tblInventory[[Product Name]:[Current Stock]],7,0)-D" & r & ",""N/A""))"
-            
-            ' Conditional format Stock Remaining < 0
-            Dim fc As FormatCondition
-            .Cells(r, 7).FormatConditions.Delete
-            Set fc = .Cells(r, 7).FormatConditions.Add(Type:=xlCellValue, Operator:=xlLess, Formula1:="0")
-            fc.Font.Color = vbRed: fc.Font.Bold = True
-        Next r
+            .Cells(i, 4).Value = 0
+            .Cells(i, 5).Formula = "=IF(B" & i & "=" & q2 & q2 & "," & q2 & q2 & ",IFERROR(INDEX(Inventory!E:E,MATCH(B" & i & ",Inventory!B:B,0)),0))"
+            .Cells(i, 6).Formula = "=IF(OR(D" & i & "=0,E" & i & "=" & q2 & q2 & "),0,D" & i & "*E" & i & ")"
+            If i Mod 2 = 0 Then .Range("A" & i & ":F" & i).Interior.Color = RGB(245, 248, 253)
+        Next i
 
-        ' === TOTALS ===
-        Dim c As String: c = N() & "#,##0.00"
-        .Range("E33:F33").Merge: .Range("E33").Value = "Subtotal (" & N() & "):": .Range("E33").Font.Bold = True
-        .Range("E33").HorizontalAlignment = xlRight
-        .Range("G33").Formula = "=SUM(F20:F31)"
+        Dim startTot As Integer: startTot = 29
+        .Cells(startTot, 5).Value = "Subtotal (" & N() & "):": .Cells(startTot, 6).Formula = "=SUM(F18:F28)"
+        .Cells(startTot + 1, 5).Value = "Discount (%):": .Cells(startTot + 1, 6).Value = 0
+        .Cells(startTot + 2, 5).Value = "Discount (" & N() & "):": .Cells(startTot + 2, 6).Formula = "=F29*(F30/100)"
+        .Cells(startTot + 3, 5).Value = "VAT / Tax (%):": .Cells(startTot + 3, 6).Formula = "=Settings!B13"
+        .Cells(startTot + 4, 5).Value = "Tax Amount (" & N() & "):": .Cells(startTot + 4, 6).Formula = "=(F29-F31)*(F32/100)"
         
-        .Range("E34:F34").Merge: .Range("E34").Value = "Discount (" & N() & "):": .Range("E34").Font.Bold = True
-        .Range("E34").HorizontalAlignment = xlRight
-        .Range("G34").Value = 0
+        .Range("A35:F35").Interior.Color = RGB(31, 73, 125)
+        .Range("A35:E35").Merge: .Range("A35").Value = "TOTAL DUE (" & N() & "):"
+        .Range("A35").Font.Color = vbWhite: .Range("A35").Font.Bold = True: .Range("A35").HorizontalAlignment = xlRight
+        .Range("F35").Formula = "=F29-F31+F33"
+        .Range("F35").Font.Color = vbWhite: .Range("F35").Font.Bold = True: .Range("F35").HorizontalAlignment = xlRight
         
-        .Range("E35:F35").Merge: .Range("E35").Value = "VAT / Tax (" & N() & "):": .Range("E35").Font.Bold = True
-        .Range("E35").HorizontalAlignment = xlRight
-        .Range("G35").Formula = "=IF(G34="""",(G33)*Settings!B8,(G33-G34)*Settings!B8)"
+        .Range("F29:F35").NumberFormat = "#,##0.00"
+
+        .Range("A37:F37").Merge: .Range("A37").Value = "PAYMENT INSTRUCTIONS": .Range("A37").Interior.Color = RGB(50, 120, 190)
+        .Range("A37").Font.Color = vbWhite: .Range("A37").Font.Bold = True: .Range("A37").IndentLevel = 1
         
-        .Range("D36:F36").Merge: .Range("D36").Value = "GRAND TOTAL (" & N() & "):"
-        .Range("D36").Font.Bold = True: .Range("D36").Font.Size = 13
-        .Range("D36").HorizontalAlignment = xlRight
-        .Range("G36").Formula = "=G33-G34+G35"
-        .Range("G36").Font.Bold = True: .Range("G36").Font.Size = 13
-
-        .Range("E20:G31").NumberFormat = c
-        .Range("G33:G36").ShrinkToFit = True
-        .Range("G33").NumberFormat = c: .Range("G34").NumberFormat = c
-        .Range("G35").NumberFormat = c: .Range("G36").NumberFormat = c
-
-        ' === BUTTONS ===
-        Dim btn As Object
-        Set btn = ws.Buttons.Add(.Range("A33").Left, .Range("A33").Top, .Range("A33:B34").Width, 30)
-        btn.Caption = "PROCESS INVOICE": btn.OnAction = "ProcessInvoice": btn.Font.Bold = True
+        .Range("A38").Value = "Bank:": .Range("B38").Formula = "=Settings!B9"
+        .Range("A39").Value = "A/C Name:": .Range("B39").Formula = "=Settings!B10"
+        .Range("A40").Value = "A/C No:": .Range("B40").Formula = "=Settings!B11"
+        .Range("A41").Value = "Sort:": .Range("B41").Formula = "=Settings!B12"
+        .Range("A38:A41").Font.Bold = True
         
-        Set btn = ws.Buttons.Add(.Range("C33").Left, .Range("C33").Top, .Range("C33").Width, 30)
-        btn.Caption = "VIEW DASHBOARD": btn.OnAction = "GoToDashboard": btn.Font.Bold = True
-
-        ' === FOOTER ===
-        .Range("A50:G50").Merge: .Range("A50").Value = "Thank you for your business!"
-        .Range("A50").Font.Italic = True: .Range("A50").Font.Color = Accent()
-        .Range("A50").Font.Size = 12: .Range("A50").HorizontalAlignment = xlCenter
-        .Range("A51:G51").Merge: .Range("A51").Formula = "=""Generated by ""&Settings!B2&"" Invoice System"""
-        .Range("A51").Font.Size = 8: .Range("A51").Font.Color = RGB(170, 170, 170)
-        .Range("A51").Font.Italic = True: .Range("A51").HorizontalAlignment = xlCenter
-
-        ' FORMATTING
-        .Range("A2:G7").Interior.Color = RGB(245, 245, 248)
-        .Range("A8:G8").Interior.Color = Navy(): .Range("A8:G8").RowHeight = 3
-        Dim rng As Variant
-        For Each rng In Array(.Range("A9:D9"), .Range("E9:G9"))
-            rng.Interior.Color = Navy(): rng.Font.Color = vbWhite
-            rng.Font.Bold = True: rng.Font.Size = 11
-        Next rng
-        .Range("A10:G16").Borders.LineStyle = xlContinuous
-        .Range("A10:G16").Borders.Color = RGB(215, 215, 215)
-        .Range("A19:G19").Interior.Color = RGB(31, 31, 31): .Range("A19:G19").Font.Color = vbWhite
-        .Range("A19:G19").Font.Bold = True: .Range("A19:G19").Font.Size = 10
-        For r = 20 To 31
-            If r Mod 2 = 0 Then .Range("A" & r & ":G" & r).Interior.Color = RGB(255, 255, 255) Else .Range("A" & r & ":G" & r).Interior.Color = LFill()
-            .Range("A" & r & ":G" & r).Borders(xlEdgeBottom).LineStyle = xlContinuous
-            .Range("A" & r & ":G" & r).Borders(xlEdgeBottom).Color = RGB(215, 215, 215)
-        Next r
-        .Range("E33:G36").Interior.Color = LFill()
-        .Range("D36:G36").Interior.Color = RGB(21, 21, 21): .Range("D36:G36").Font.Color = vbWhite
-        .PageSetup.PrintArea = "$A$1:$G$52": .PageSetup.Zoom = False
-        .PageSetup.FitToPagesWide = 1: .PageSetup.FitToPagesTall = 1
+        .Range("A43:F43").Merge: .Range("A43").Value = "NOTES & TERMS": .Range("A43").Interior.Color = RGB(50, 120, 190)
+        .Range("A43").Font.Color = vbWhite: .Range("A43").Font.Bold = True: .Range("A43").IndentLevel = 1
+        
+        .Range("A44").Formula = "=""1. Payment due within "" & Settings!B16 & "" days of invoice date."""
+        .Range("A45").Value = "2. Late payments attract 2% monthly interest."
+        .Range("A46").Value = "3. Disputes must be raised within 7 days of receipt."
+        .Range("A44:A46").Font.Size = 9: .Range("A44:A46").Font.Color = RGB(60, 60, 60)
+        
+        .Range("A48:F48").Merge: .Range("A48").Value = "Thank you for your business!"
+        .Range("A48").Font.Italic = True: .Range("A48").Font.Color = RGB(31, 73, 125): .Range("A48").Font.Size = 14: .Range("A48").HorizontalAlignment = xlCenter
+        
+        .Range("A49:F49").Merge: .Range("A49").Value = "Generated by TedPrime Hub Invoice System"
+        .Range("A49").Font.Size = 9: .Range("A49").Font.Color = RGB(180, 180, 180): .Range("A49").HorizontalAlignment = xlCenter
+        
+        .PageSetup.PrintArea = "$A$1:$F$50"
+        .PageSetup.FitToPagesWide = 1
+        .PageSetup.FitToPagesTall = False
+        .PageSetup.Zoom = False
     End With
 End Sub
 
@@ -393,14 +409,22 @@ Private Sub BuildDashboard(ws As Worksheet)
     With ws
         .Tab.Color = RGB(21, 21, 21)
         .Columns("A").ColumnWidth = 2
-        .Range("B1:L3").Merge: .Range("B1").Value = "📊 INVENTORY & SALES DASHBOARD"
+        .Range("B1:L3").Merge: .Range("B1").Value = "INVENTORY & SALES DASHBOARD"
         .Range("B1").Interior.Color = RGB(21, 21, 21): .Range("B1").Font.Color = vbWhite
         .Range("B1").Font.Size = 20: .Range("B1").Font.Bold = True
         .Range("B1").VerticalAlignment = xlCenter: .Range("B1").IndentLevel = 1
         
-        ' KPI Cards
-        Dim Lbl As Variant: Lbl = Array("Total Products", "Total Stock Value", "Low Stock Items", "Out of Stock", "Total Invoices", "Total Revenue (" & N() & ")")
-        Dim Frm As Variant: Frm = Array("=COUNTA(Inventory!A2:A1000)", "=SUMPRODUCT(Inventory!E2:E1000,Inventory!H2:H1000)", "=COUNTIF(Inventory!I2:I1000,""LOW STOCK"")", "=COUNTIF(Inventory!I2:I1000,""OUT OF STOCK"")", "=COUNTA(Records!A2:A1000)", "=SUM(Records!E2:E1000)")
+        Dim Lbl(0 To 5) As String
+        Lbl(0) = "Total Products": Lbl(1) = "Total Stock Value": Lbl(2) = "Low Stock Items"
+        Lbl(3) = "Out of Stock": Lbl(4) = "Total Invoices": Lbl(5) = "Total Revenue (" & N() & ")"
+        
+        Dim Frm(0 To 5) As String
+        Frm(0) = "=COUNTA('Inventory'!A2:A1000)"
+        Frm(1) = "=SUMPRODUCT('Inventory'!E2:E1000,'Inventory'!H2:H1000)"
+        Frm(2) = "=COUNTIF('Inventory'!I2:I1000,""LOW STOCK"")"
+        Frm(3) = "=COUNTIF('Inventory'!I2:I1000,""OUT OF STOCK"")"
+        Frm(4) = "=COUNTA('Records'!A2:A1000)"
+        Frm(5) = "=SUM('Records'!E2:E1000)"
         
         Dim i As Integer, rowBase As Integer, colBase As Integer
         For i = 0 To 5
@@ -417,7 +441,7 @@ Private Sub BuildDashboard(ws As Worksheet)
                 .HorizontalAlignment = xlCenter: .VerticalAlignment = xlCenter
                 .Interior.Color = RGB(245, 245, 245)
                 .Borders.LineStyle = xlContinuous: .Borders.Color = RGB(150, 150, 150)
-                If i = 1 Or i = 5 Then .NumberFormat = N() & "#,##0" ' Currency
+                If i = 1 Or i = 5 Then .NumberFormat = N() & "#,##0"
             End With
             
             .Range(.Cells(rowBase + 3, colBase), .Cells(rowBase + 3, colBase + 1)).Merge
@@ -428,16 +452,11 @@ Private Sub BuildDashboard(ws As Worksheet)
             End With
         Next i
 
-        ' Low Stock Table
-        .Range("B32:L32").Merge: .Range("B32").Value = "⚠️ ITEMS REQUIRING RESTOCKING"
+        .Range("B32:L32").Merge: .Range("B32").Value = "ITEMS REQUIRING RESTOCKING"
         .Range("B32").Interior.Color = RGB(220, 53, 69): .Range("B32").Font.Color = vbWhite
         .Range("B32").Font.Bold = True: .Range("B32").VerticalAlignment = xlCenter
         
-        .Range("B33").Formula2 = "=FILTER(tblInventory[[Product ID]:[Stock Status]],(tblInventory[Stock Status]=""LOW STOCK"")+(tblInventory[Stock Status]=""OUT OF STOCK""),""All stock levels healthy!"")"
-        
-        ' Note: Generating complex PivotCharts via VBA in an empty workbook often causes runtime errors
-        ' because the PivotCaches cannot be generated without data.
-        ' Instead, we have built the layout, KPIs, and Low Stock filter natively.
-        ' The user can insert the 4 native charts manually once data is populated.
+        .Range("B33").Value = "Run Dashboard to see low-stock items"
+        .Range("B33").Font.Italic = True: .Range("B33").Font.Color = RGB(120, 120, 120)
     End With
 End Sub

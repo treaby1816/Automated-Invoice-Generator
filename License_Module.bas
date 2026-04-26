@@ -1,4 +1,4 @@
-Attribute VB_Name = "Module2"
+Attribute VB_Name = "License_Module"
 Option Explicit
 
 ' ================================================================
@@ -6,18 +6,18 @@ Option Explicit
 ' ================================================================
 ' 1. Change salt string in HashFingerprint() to your own secret value
 ' 2. Open workbook on CLIENT's machine
-' 3. Run GenerateLicenseForClient() â€” copy the output key
+' 3. Run GenerateLicenseForClient() — copy the output key
 ' 4. Paste license key into LicenseData!B1
 ' 5. Fill client company name in LicenseData!B2
 ' 6. Set expiry date in LicenseData!B3 (format: DD-MMM-YYYY)
 ' 7. Fill Settings!B2:B5 with client's company details
 ' 8. Lock VBA project: VBA Editor > Tools > VBAProject Properties > Protection
-' 9. Set VBA project password (keep this password â€” do NOT give to client)
+' 9. Set VBA project password (keep this password — do NOT give to client)
 ' 10. Save and close workbook
 ' 11. Reopen to confirm license validation passes
 ' 12. Deliver workbook to client
 ' ================================================================
-' RENEWAL PROCESS (remote â€” no site visit needed):
+' RENEWAL PROCESS (remote — no site visit needed):
 ' 1. Client sends you their machine fingerprint (run GenerateLicense)
 ' 2. You generate new key + new expiry date
 ' 3. Send key string to client via email/WhatsApp
@@ -124,6 +124,15 @@ Public Function ValidateLicense() As Boolean
     Dim expectedKey As String
     currentFP = GetMachineFingerprint()
     expectedKey = HashFingerprint(currentFP)
+
+    ' --- Auto-Activate if first run (for developer/tester) ---
+    If storedKey = "WAITING_ACTIVATION" Then
+        wsLic.Range("B1").Value = expectedKey
+        wsLic.Range("B4").Value = Date
+        wsLic.Range("B5").Value = currentFP
+        ValidateLicense = True
+        Exit Function
+    End If
 
     If storedKey <> expectedKey Then
         ' --- Grace login handling ---
