@@ -20,7 +20,7 @@ Public Sub SetupInvoiceSystem()
     Call BuildInvoice(wI): Call FormatInvoice(wI): Call MakeButtons(wI)
     wI.Activate: wI.Range("B10").Select: ActiveWindow.DisplayGridlines = False
     Application.DisplayAlerts = True: Application.ScreenUpdating = True
-    MsgBox "Invoice System setup complete!", vbInformation, "Setup Complete"
+    MsgBox "Invoice System setup complete!" & vbCrLf & vbCrLf & "Click on the 'LOGO' placeholder to insert your brand logo.", vbInformation, "Setup Complete"
 End Sub
 
 Private Sub BuildSettings(ws As Worksheet)
@@ -41,9 +41,9 @@ Private Sub BuildSettings(ws As Worksheet)
         .Range("B2:B16").Interior.Color = EFill()
         .Range("A2:B16").Borders.LineStyle = xlContinuous
         .Range("A2:B16").Borders.Color = RGB(200, 200, 200)
-        .Range("B14").NumberFormat = "0": .Range("B12").NumberFormat = "0.0"
+        .Range("B15").NumberFormat = "0": .Range("B13").NumberFormat = "0.0"
         On Error Resume Next: ThisWorkbook.Names("NextInvNum").Delete: On Error GoTo 0
-        ThisWorkbook.Names.Add Name:="NextInvNum", RefersTo:="=Settings!$B$14"
+        ThisWorkbook.Names.Add Name:="NextInvNum", RefersTo:="=Settings!$B$15"
         Dim b As Object: Set b = .Buttons.Add(.Range("A18").Left, .Range("A18").Top, .Range("A18:B19").Width, .Range("A18:B19").Height)
         b.Caption = "Apply Settings": b.OnAction = "ApplySettings": b.Font.Bold = True
     End With
@@ -68,9 +68,9 @@ End Sub
 
 Private Sub BuildInvoice(ws As Worksheet)
     With ws
-        .Columns("A").ColumnWidth = 5: .Columns("B").ColumnWidth = 14
-        .Columns("C").ColumnWidth = 28: .Columns("D").ColumnWidth = 10
-        .Columns("E").ColumnWidth = 18: .Columns("F").ColumnWidth = 18: .Columns("G").ColumnWidth = 18
+        .Columns("A").ColumnWidth = 4: .Columns("B").ColumnWidth = 14
+        .Columns("C").ColumnWidth = 26: .Columns("D").ColumnWidth = 8
+        .Columns("E").ColumnWidth = 12: .Columns("F").ColumnWidth = 14: .Columns("G").ColumnWidth = 14
 
         ' === TOP ACCENT LINE ===
         .Range("A1:G1").Interior.Color = Navy(): .Range("A1:G1").RowHeight = 5
@@ -91,6 +91,7 @@ Private Sub BuildInvoice(ws As Worksheet)
             .TextFrame2.TextRange.Font.Bold = msoTrue
             .TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
             .TextFrame2.VerticalAnchor = msoAnchorMiddle
+            .OnAction = "InsertLogo"
         End With
 
         ' === HEADER ===
@@ -111,7 +112,7 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("F4:F7").Font.Bold = True: .Range("F4:F7").HorizontalAlignment = xlRight
         .Range("F4:F7").Font.Size = 10
 
-        .Range("G4").Formula = "=Settings!B13&TEXT(Settings!B14,""0000"")"
+        .Range("G4").Formula = "=Settings!B14&TEXT(Settings!B15,""0000"")"
         .Range("G4").Font.Bold = True: .Range("G4").Font.Color = Accent(): .Range("G4").Font.Size = 12
         .Range("G5").Formula = "=TEXT(TODAY(),""DD/MM/YYYY"")": .Range("G5").Font.Color = Accent()
         .Range("G6").NumberFormat = "DD/MM/YYYY": .Range("G6").Font.Color = Accent()
@@ -132,48 +133,49 @@ Private Sub BuildInvoice(ws As Worksheet)
         ' === ITEMS TABLE (Row 17 header, 18-29 data) ===
         .Range("A17").Value = "#": .Range("B17:C17").Merge: .Range("B17").Value = "DESCRIPTION"
         .Range("D17").Value = "QTY": .Range("E17").Value = "UNIT PRICE (" & N() & ")"
-        .Range("F17").Value = "AMOUNT (" & N() & ")"
+        .Range("F17:G17").Merge: .Range("F17").Value = "AMOUNT (" & N() & ")"
         Dim r As Long
         For r = 18 To 29
             .Cells(r, 1).Value = r - 17: .Cells(r, 1).HorizontalAlignment = xlCenter
             .Range("B" & r & ":C" & r).Merge
+            .Range("F" & r & ":G" & r).Merge
             .Cells(r, 4).Value = 0: .Cells(r, 5).Value = 0
             .Cells(r, 6).Formula = "=IF(D" & r & "*E" & r & "=0,""-"",D" & r & "*E" & r & ")"
         Next r
 
         ' === TOTALS ===
         Dim c As String: c = N() & "#,##0.00"
-        .Range("E31").Value = "Subtotal (" & N() & "):": .Range("E31").Font.Bold = True
+        .Range("E31:F31").Merge: .Range("E31").Value = "Subtotal (" & N() & "):": .Range("E31").Font.Bold = True
         .Range("E31").HorizontalAlignment = xlRight
-        .Range("F31").Formula = "=SUMPRODUCT((ISNUMBER(F18:F29))*(F18:F29))"
-        .Range("E33").Value = "Discount (%):": .Range("E33").Font.Bold = True
-        .Range("E33").HorizontalAlignment = xlRight: .Range("F33").Value = 0
-        .Range("E34").Value = "Discount (" & N() & "):": .Range("E34").Font.Bold = True
+        .Range("G31").Formula = "=SUM(F18:F29)"
+        .Range("E33:F33").Merge: .Range("E33").Value = "Discount (%):": .Range("E33").Font.Bold = True
+        .Range("E33").HorizontalAlignment = xlRight: .Range("G33").Value = 0
+        .Range("E34:F34").Merge: .Range("E34").Value = "Discount (" & N() & "):": .Range("E34").Font.Bold = True
         .Range("E34").HorizontalAlignment = xlRight
-        .Range("F34").Formula = "=IF(F33=0,""-"",F31*F33/100)"
-        .Range("E35").Value = "VAT / Tax (%):": .Range("E35").Font.Bold = True
+        .Range("G34").Formula = "=IF(G33=0,""-"",G31*G33/100)"
+        .Range("E35:F35").Merge: .Range("E35").Value = "VAT / Tax (%):": .Range("E35").Font.Bold = True
         .Range("E35").HorizontalAlignment = xlRight
-        .Range("F35").Formula = "=Settings!B12"
-        .Range("E36").Value = "Tax Amount (" & N() & "):": .Range("E36").Font.Bold = True
+        .Range("G35").Formula = "=Settings!B13"
+        .Range("E36:F36").Merge: .Range("E36").Value = "Tax Amount (" & N() & "):": .Range("E36").Font.Bold = True
         .Range("E36").HorizontalAlignment = xlRight
-        .Range("F36").Formula = "=IF(F34=""-"",F31*F35/100,(F31-F34)*F35/100)"
+        .Range("G36").Formula = "=IF(G34=""-"",G31*G35/100,(G31-G34)*G35/100)"
         .Range("D37:F37").Merge: .Range("D37").Value = "TOTAL DUE (" & N() & "):"
         .Range("D37").Font.Bold = True: .Range("D37").Font.Size = 13
         .Range("D37").HorizontalAlignment = xlRight
-        .Range("G37").Formula = "=IF(F34=""-"",F31+F36,F31-F34+F36)"
+        .Range("G37").Formula = "=IF(G34=""-"",G31+G36,G31-G34+G36)"
         .Range("G37").Font.Bold = True: .Range("G37").Font.Size = 13
 
         .Range("E18:E29").NumberFormat = c: .Range("F18:F29").NumberFormat = c
-        .Range("F31").NumberFormat = c: .Range("F34").NumberFormat = c
-        .Range("F36").NumberFormat = c: .Range("G37").NumberFormat = c
-        .Range("F33").NumberFormat = "0.0": .Range("F35").NumberFormat = "0.0"
+        .Range("G31").NumberFormat = c: .Range("G34").NumberFormat = c
+        .Range("G36").NumberFormat = c: .Range("G37").NumberFormat = c
+        .Range("G33").NumberFormat = "0.0": .Range("G35").NumberFormat = "0.0"
 
         ' === PAYMENT INSTRUCTIONS ===
         .Range("A39:G39").Merge: .Range("A39").Value = "PAYMENT INSTRUCTIONS"
-        .Range("B40").Value = "Bank:": .Range("C40").Formula = "=Settings!B8"
-        .Range("B41").Value = "A/C Name:": .Range("C41").Formula = "=Settings!B9"
-        .Range("B42").Value = "A/C No:": .Range("C42").Formula = "=Settings!B10"
-        .Range("B43").Value = "Sort:": .Range("C43").Formula = "=Settings!B11"
+        .Range("B40").Value = "Bank:": .Range("C40").Formula = "=Settings!B9"
+        .Range("B41").Value = "A/C Name:": .Range("C41").Formula = "=Settings!B10"
+        .Range("B42").Value = "A/C No:": .Range("C42").Formula = "=Settings!B11"
+        .Range("B43").Value = "Sort:": .Range("C43").Formula = "=Settings!B12"
         .Range("B40:B43").Font.Bold = True: .Range("B40:B43").Font.Size = 10
 
         ' === NOTES & TERMS ===
@@ -194,6 +196,7 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("A51").Font.Italic = True: .Range("A51").HorizontalAlignment = xlCenter
 
         .PageSetup.PrintArea = "$A$1:$G$52"
+        .PageSetup.Zoom = False
         .PageSetup.Orientation = xlPortrait
         .PageSetup.FitToPagesWide = 1: .PageSetup.FitToPagesTall = 1
         .PageSetup.TopMargin = Application.InchesToPoints(0.3)
@@ -218,29 +221,29 @@ Private Sub FormatInvoice(ws As Worksheet)
         .Range("A10:G14").Borders.LineStyle = xlContinuous
         .Range("A10:G14").Borders.Color = RGB(215, 215, 215)
 
-        With .Range("A17:F17")
+        With .Range("A17:G17")
             .Interior.Color = Navy(): .Font.Color = vbWhite
             .Font.Bold = True: .Font.Size = 10: .HorizontalAlignment = xlCenter
         End With
         Dim r As Long
         For r = 18 To 29
             If r Mod 2 = 0 Then
-                .Range("A" & r & ":F" & r).Interior.Color = RGB(255, 255, 255)
+                .Range("A" & r & ":G" & r).Interior.Color = RGB(255, 255, 255)
             Else
-                .Range("A" & r & ":F" & r).Interior.Color = LFill()
+                .Range("A" & r & ":G" & r).Interior.Color = LFill()
             End If
-            .Range("A" & r & ":F" & r).Borders(xlEdgeBottom).LineStyle = xlContinuous
-            .Range("A" & r & ":F" & r).Borders(xlEdgeBottom).Color = RGB(215, 215, 215)
+            .Range("A" & r & ":G" & r).Borders(xlEdgeBottom).LineStyle = xlContinuous
+            .Range("A" & r & ":G" & r).Borders(xlEdgeBottom).Color = RGB(215, 215, 215)
             .Range("D" & r & ":E" & r).Interior.Color = EFill()
         Next r
         .Range("A18:A29").Font.Bold = True: .Range("A18:A29").Font.Color = Navy()
 
-        .Range("E31:F31").Interior.Color = RGB(245, 245, 248)
-        .Range("E31:F31").Borders(xlEdgeBottom).LineStyle = xlContinuous
-        .Range("E33:F36").Interior.Color = LFill()
-        .Range("E33:F36").Borders.LineStyle = xlContinuous
-        .Range("E33:F36").Borders.Color = RGB(200, 200, 200)
-        .Range("F33").Interior.Color = EFill()
+        .Range("E31:G31").Interior.Color = RGB(245, 245, 248)
+        .Range("E31:G31").Borders(xlEdgeBottom).LineStyle = xlContinuous
+        .Range("E33:G36").Interior.Color = LFill()
+        .Range("E33:G36").Borders.LineStyle = xlContinuous
+        .Range("E33:G36").Borders.Color = RGB(200, 200, 200)
+        .Range("G33").Interior.Color = EFill()
 
         .Range("D37:G37").Interior.Color = Navy()
         .Range("D37:G37").Font.Color = vbWhite
@@ -313,7 +316,7 @@ Public Sub ClearForm()
         ws.Range("B" & r & ":C" & r).ClearContents
         ws.Cells(r, 4).Value = 0: ws.Cells(r, 5).Value = 0
     Next r
-    ws.Range("F33").Value = 0: ws.Range("G6").ClearContents
+    ws.Range("G33").Value = 0: ws.Range("G6").ClearContents
     ws.Range("G7").Value = "UNPAID": ws.Range("G7").Font.Color = RGB(220, 20, 20)
     ws.Range("B10").Select
 End Sub
@@ -321,7 +324,7 @@ End Sub
 Public Sub NewInvoice()
     Call ClearForm
     Dim wS As Worksheet: Set wS = ThisWorkbook.Sheets("Settings")
-    wS.Range("B14").Value = wS.Range("B14").Value + 1
+    wS.Range("B15").Value = wS.Range("B15").Value + 1
     MsgBox "New invoice " & ThisWorkbook.Sheets("Invoice").Range("G4").Value & " ready.", vbInformation
 End Sub
 
@@ -335,9 +338,9 @@ Public Sub SaveRecord()
     wR.Cells(nr, 2).Value = Date: wR.Cells(nr, 2).NumberFormat = "DD/MM/YYYY"
     wR.Cells(nr, 3).Value = wI.Range("B10").Value
     wR.Cells(nr, 4).Value = wI.Range("B14").Value
-    wR.Cells(nr, 5).Value = wI.Range("F31").Value: wR.Cells(nr, 5).NumberFormat = "#,##0.00"
-    wR.Cells(nr, 6).Value = wI.Range("F33").Value
-    wR.Cells(nr, 7).Value = wI.Range("F35").Value
+    wR.Cells(nr, 5).Value = wI.Range("G31").Value: wR.Cells(nr, 5).NumberFormat = "#,##0.00"
+    wR.Cells(nr, 6).Value = wI.Range("G33").Value
+    wR.Cells(nr, 7).Value = wI.Range("G35").Value
     wR.Cells(nr, 8).Value = wI.Range("G37").Value: wR.Cells(nr, 8).NumberFormat = "#,##0.00"
     wR.Cells(nr, 9).Value = wI.Range("G7").Value
     MsgBox "Invoice " & wI.Range("G4").Value & " saved to Records.", vbInformation
@@ -348,7 +351,7 @@ End Sub
 Public Sub ApplySettings()
     Application.Calculate
     Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Invoice")
-    Dim d As Long: d = ThisWorkbook.Sheets("Settings").Range("B15").Value
+    Dim d As Long: d = ThisWorkbook.Sheets("Settings").Range("B16").Value
     ws.Range("B46").Value = "1. Payment due within " & d & " days of invoice date."
     MsgBox "Settings applied!", vbInformation
 End Sub
@@ -397,6 +400,7 @@ Public Sub InsertLogo()
     Set pic = ws.Shapes.AddPicture(CStr(imgPath), msoFalse, msoTrue, _
         ws.Range("A2").Left + 2, ws.Range("A2").Top + 2, -1, -1)
     pic.Name = "CompanyLogo"
+    pic.OnAction = "RemoveLogo"
 
     ' Scale to fit header area (max 65x52)
     If pic.Width > 65 Then
@@ -408,11 +412,14 @@ Public Sub InsertLogo()
         pic.Height = 52: pic.Width = pic.Width * ratio
     End If
 
-    MsgBox "Logo inserted! It will appear on all invoices and PDF exports.", vbInformation
+    MsgBox "Logo inserted! Click the logo again if you want to remove it.", vbInformation
 End Sub
 
 Public Sub RemoveLogo()
     Dim ws As Worksheet: Set ws = ThisWorkbook.Sheets("Invoice")
+    
+    If MsgBox("Do you want to remove the current logo?", vbQuestion + vbYesNo) = vbNo Then Exit Sub
+    
     On Error Resume Next
     ws.Shapes("CompanyLogo").Delete
     On Error GoTo 0
@@ -431,6 +438,6 @@ Public Sub RemoveLogo()
         .TextFrame2.TextRange.Font.Bold = msoTrue
         .TextFrame2.TextRange.ParagraphFormat.Alignment = msoAlignCenter
         .TextFrame2.VerticalAnchor = msoAnchorMiddle
+        .OnAction = "InsertLogo"
     End With
-    MsgBox "Logo removed. Placeholder restored.", vbInformation
 End Sub
