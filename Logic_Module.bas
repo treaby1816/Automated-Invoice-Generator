@@ -116,10 +116,11 @@ Public Sub ClearForm()
     wsInv.Range("D18:D28").ClearContents
     wsInv.Range("F30").Value = 0
     
-    Dim defaultLabels As Variant: defaultLabels = Array("Client / Company Name", "Street Address", "City, State", "Phone", "Email")
+    Dim defaultLabels As Variant: defaultLabels = Array("Client Name", "Company Name", "Street Address", "City, State", "Phone", "Email")
     Dim i As Integer
-    For i = 0 To 4
+    For i = 0 To 5
         wsInv.Cells(9 + i, 1).Value = defaultLabels(i)
+        wsInv.Cells(9 + i, 5).Value = defaultLabels(i)
     Next i
 End Sub
 
@@ -137,9 +138,12 @@ Public Sub SaveRecord()
     Dim wsSet As Worksheet: Set wsSet = ThisWorkbook.Sheets("Settings")
 
     Dim cName As String: cName = Trim(wsInv.Range("A9").Value)
-    If cName = "" Or cName = "Client / Company Name" Then
+    If cName = "" Or cName = "Client Name" Then
         cName = "Walk-in Customer"
     End If
+    
+    Dim cCompany As String: cCompany = Trim(wsInv.Range("A10").Value)
+    If cCompany = "Company Name" Then cCompany = ""
 
     Dim r As Long
     Dim hasItems As Boolean: hasItems = False
@@ -190,7 +194,7 @@ Public Sub SaveRecord()
     wsRec.Cells(nr, 1).Value = invoiceID
     wsRec.Cells(nr, 2).Value = wsInv.Range("F3").Value
     wsRec.Cells(nr, 3).Value = cName
-    wsRec.Cells(nr, 4).Value = ""
+    wsRec.Cells(nr, 4).Value = cCompany
     wsRec.Cells(nr, 5).Value = wsInv.Range("F35").Value
     wsRec.Cells(nr, 6).Value = itemCount
 

@@ -111,7 +111,7 @@ Private Sub BuildSettings(ws As Worksheet)
         For i = 0 To UBound(cats)
             .Cells(i + 2, 4).Value = cats(i)
         Next i
-        .Range("D2:D8").Borders.LineStyle = xlContinuous
+        .Range("D2:D50").Borders.LineStyle = xlContinuous
     End With
 End Sub
 
@@ -183,7 +183,8 @@ Private Sub BuildStockIn(ws As Worksheet)
         
         With .Range("D5").Validation
             .Delete
-            .Add Type:=xlValidateList, AlertStyle:=xlValidAlertStop, Formula1:="=Settings!$D$2:$D$8"
+            .Add Type:=xlValidateList, Formula1:="=Settings!$D$2:$D$50"
+            .ShowError = False
         End With
         
         Dim btn As Object
@@ -301,15 +302,15 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("E8:F8").Merge: .Range("E8").Value = "SHIP TO:": .Range("E8").Interior.Color = RGB(50, 120, 190)
         .Range("A8, E8").Font.Color = vbWhite: .Range("A8, E8").Font.Bold = True: .Range("A8, E8").IndentLevel = 1
         
-        Dim lb As Variant: lb = Array("Client / Company Name", "Street Address", "City, State", "Phone", "Email")
-        For i = 0 To 4
+        Dim lb As Variant: lb = Array("Client Name", "Company Name", "Street Address", "City, State", "Phone", "Email")
+        For i = 0 To 5
             .Range(.Cells(9 + i, 1), .Cells(9 + i, 4)).Merge
             .Cells(9 + i, 1).Value = lb(i): .Cells(9 + i, 1).Font.Color = RGB(180, 180, 180): .Cells(9 + i, 1).Font.Italic = True
             .Range(.Cells(9 + i, 5), .Cells(9 + i, 6)).Merge
             .Cells(9 + i, 5).Value = lb(i): .Cells(9 + i, 5).Font.Color = RGB(180, 180, 180): .Cells(9 + i, 5).Font.Italic = True
         Next i
 
-        .Rows("14:15").RowHeight = 10
+        .Rows("15").RowHeight = 10
 
         .Rows("16").RowHeight = 25
         .Range("A16:F16").Interior.Color = RGB(230, 230, 230)
