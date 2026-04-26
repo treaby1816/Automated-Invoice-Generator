@@ -11,15 +11,24 @@ Private Function N() As String: N = ChrW(8358): End Function
 Public Sub SetupInvoiceSystem()
     Application.ScreenUpdating = False: Application.DisplayAlerts = False
     Dim wb As Workbook: Set wb = ThisWorkbook
+    
+    ' Clear the Invoice sheet first so Excel doesn't ask for missing 'Settings' references
+    Dim wI As Worksheet: Set wI = wb.Sheets(1)
+    wI.Cells.Clear: wI.Cells.ClearFormats
+    Dim shp As Shape
+    For Each shp In wI.Shapes
+        shp.Delete
+    Next shp
+    
     Do While wb.Sheets.Count > 1: wb.Sheets(wb.Sheets.Count).Delete: Loop
     wb.Sheets(1).Name = "Invoice"
-    Dim wS As Worksheet: Set wS = wb.Sheets.Add(After:=wb.Sheets("Invoice")): wS.Name = "Settings"
+    
+    Dim wS As Worksheet: Set wS = wb.Sheets.Add(After:=wI): wS.Name = "Settings"
     Dim wR As Worksheet: Set wR = wb.Sheets.Add(After:=wS): wR.Name = "Records"
+    
     Call BuildSettings(wS): Call BuildRecords(wR)
-    Dim wI As Worksheet: Set wI = wb.Sheets("Invoice")
-    wI.Cells.Clear: wI.Cells.ClearFormats
-    On Error Resume Next: wI.DrawingObjects.Delete: On Error GoTo 0
     Call BuildInvoice(wI): Call FormatInvoice(wI): Call MakeButtons(wI)
+    
     wI.Activate: wI.Range("B10").Select: ActiveWindow.DisplayGridlines = False
     Application.DisplayAlerts = True: Application.ScreenUpdating = True
     MsgBox "Invoice System setup complete!" & vbCrLf & vbCrLf & "Click on the 'LOGO' placeholder to insert your brand logo.", vbInformation, "Setup Complete"
