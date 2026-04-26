@@ -45,6 +45,19 @@ Public Sub SetupInvoiceSystem()
     Application.DisplayAlerts = True
     Application.ScreenUpdating = True
     
+    ' Safely freeze panes AFTER screen updating is turned back on
+    Dim freezeSheets As Variant
+    freezeSheets = Array("Inventory", "StockIn", "Records")
+    Dim shName As Variant
+    For Each shName In freezeSheets
+        wb.Sheets(CStr(shName)).Activate
+        ActiveWindow.FreezePanes = False
+        ActiveWindow.SplitRow = 1
+        ActiveWindow.FreezePanes = True
+    Next shName
+    
+    wsDash.Activate ' Return to dashboard
+    
     MsgBox "Invoice & Inventory Management System setup complete!" & vbCrLf & _
            "Please complete the Developer Deployment Checklist in Module2.", vbInformation, "Setup Complete"
 End Sub
@@ -133,11 +146,6 @@ Private Sub BuildInventory(ws As Worksheet)
         fc.Interior.Color = RGB(253, 126, 20): fc.Font.Color = vbBlack: fc.Font.Bold = True
         Set fc = .Range("I2:I1000").FormatConditions.Add(Type:=xlCellValue, Operator:=xlEqual, Formula1:="=""IN STOCK""")
         fc.Interior.Color = RGB(40, 167, 69): fc.Font.Color = vbWhite: fc.Font.Bold = True
-        
-        ws.Activate
-        ActiveWindow.FreezePanes = False
-        ActiveWindow.SplitRow = 1
-        ActiveWindow.FreezePanes = True
     End With
 End Sub
 
@@ -191,11 +199,6 @@ Private Sub BuildStockIn(ws As Worksheet)
         
         .Columns("A:I").AutoFit
         .Columns("A").ColumnWidth = 14
-        
-        ws.Activate
-        ActiveWindow.FreezePanes = False
-        ActiveWindow.SplitRow = 1
-        ActiveWindow.FreezePanes = True
     End With
 End Sub
 
@@ -219,11 +222,6 @@ Private Sub BuildRecords(ws As Worksheet)
         
         .Columns("B").NumberFormat = "DD-MMM-YYYY"
         .Columns("E").NumberFormat = "#,##0.00"
-        
-        ws.Activate
-        ActiveWindow.FreezePanes = False
-        ActiveWindow.SplitRow = 1
-        ActiveWindow.FreezePanes = True
     End With
 End Sub
 
