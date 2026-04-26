@@ -136,7 +136,7 @@ Private Sub BuildInventory(ws As Worksheet)
         
         ws.Activate
         ActiveWindow.FreezePanes = False
-        .Rows("2:2").Select
+        ActiveWindow.SplitRow = 1
         ActiveWindow.FreezePanes = True
     End With
 End Sub
@@ -191,6 +191,11 @@ Private Sub BuildStockIn(ws As Worksheet)
         
         .Columns("A:I").AutoFit
         .Columns("A").ColumnWidth = 14
+        
+        ws.Activate
+        ActiveWindow.FreezePanes = False
+        ActiveWindow.SplitRow = 1
+        ActiveWindow.FreezePanes = True
     End With
 End Sub
 
@@ -214,6 +219,11 @@ Private Sub BuildRecords(ws As Worksheet)
         
         .Columns("B").NumberFormat = "DD-MMM-YYYY"
         .Columns("E").NumberFormat = "#,##0.00"
+        
+        ws.Activate
+        ActiveWindow.FreezePanes = False
+        ActiveWindow.SplitRow = 1
+        ActiveWindow.FreezePanes = True
     End With
 End Sub
 
