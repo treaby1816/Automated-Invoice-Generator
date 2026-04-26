@@ -99,7 +99,7 @@ Private Sub BuildInvoice(ws As Worksheet)
         ' === HEADER ===
         .Range("B2:D3").Merge: .Range("B2").Formula = "=Settings!B2"
         .Range("B2").Font.Size = 20: .Range("B2").Font.Bold = True: .Range("B2").Font.Color = Navy()
-        .Range("B2").VerticalAlignment = xlCenter: .Range("B2").IndentLevel = 1
+        .Range("B2").VerticalAlignment = xlCenter: .Range("B2").HorizontalAlignment = xlCenter
         .Range("F2:G3").Merge: .Range("F2").Value = "INVOICE"
         .Range("F2").Font.Size = 26: .Range("F2").Font.Bold = True: .Range("F2").Font.Color = Accent()
         .Range("F2").HorizontalAlignment = xlRight: .Range("F2").VerticalAlignment = xlCenter
