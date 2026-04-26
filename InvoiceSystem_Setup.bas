@@ -17,6 +17,8 @@ Public Sub SetupInvoiceSystem()
     Dim wR As Worksheet: Set wR = wb.Sheets.Add(After:=wS): wR.Name = "Records"
     Call BuildSettings(wS): Call BuildRecords(wR)
     Dim wI As Worksheet: Set wI = wb.Sheets("Invoice")
+    wI.Cells.Clear: wI.Cells.ClearFormats
+    On Error Resume Next: wI.DrawingObjects.Delete: On Error GoTo 0
     Call BuildInvoice(wI): Call FormatInvoice(wI): Call MakeButtons(wI)
     wI.Activate: wI.Range("B10").Select: ActiveWindow.DisplayGridlines = False
     Application.DisplayAlerts = True: Application.ScreenUpdating = True
@@ -166,6 +168,7 @@ Private Sub BuildInvoice(ws As Worksheet)
         .Range("G37").Font.Bold = True: .Range("G37").Font.Size = 13
 
         .Range("E18:E29").NumberFormat = c: .Range("F18:F29").NumberFormat = c
+        .Range("G31:G37").ShrinkToFit = True
         .Range("G31").NumberFormat = c: .Range("G34").NumberFormat = c
         .Range("G36").NumberFormat = c: .Range("G37").NumberFormat = c
         .Range("G33").NumberFormat = "0.0": .Range("G35").NumberFormat = "0.0"
@@ -402,15 +405,10 @@ Public Sub InsertLogo()
     pic.Name = "CompanyLogo"
     pic.OnAction = "RemoveLogo"
 
-    ' Scale to fit header area (max 65x52)
-    If pic.Width > 65 Then
-        Dim ratio As Double: ratio = 65 / pic.Width
-        pic.Width = 65: pic.Height = pic.Height * ratio
-    End If
-    If pic.Height > 52 Then
-        ratio = 52 / pic.Height
-        pic.Height = 52: pic.Width = pic.Width * ratio
-    End If
+    ' Scale to fit header area cleanly
+    pic.LockAspectRatio = msoTrue
+    pic.Width = 58
+    If pic.Height > 48 Then pic.Height = 48
 
     MsgBox "Logo inserted! Click the logo again if you want to remove it.", vbInformation
 End Sub
