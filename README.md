@@ -1,172 +1,43 @@
-# Automated Invoice Generator
+# Invoice & Inventory Management System
 
-A professional, production-ready automated Invoice System built entirely in Excel VBA (`.xlsm`). Features a colorful premium design with dark navy theme, 5 action buttons, brand logo support, and comprehensive invoice management.
+This repository contains a massive upgrade from a basic Automated Invoice Generator to a full **Hardware-Locked Invoice & Inventory Management System**. It features stock tracking, live database analytics, an automated in-sheet form, and robust security.
 
-![Platform](https://img.shields.io/badge/Platform-Microsoft%20Excel-green)
-![Language](https://img.shields.io/badge/Language-VBA-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+## New Architecture Overview
 
----
+The system runs completely inside Excel without external database dependencies, utilizing 6 core sheets:
 
-## Features
+1. **Dashboard:** Live analytics featuring 6 KPI cards (Total Revenue, Stock Value, etc.) and a native Excel `FILTER` array pulling items requiring restocking.
+2. **Invoice:** A premium, printable invoice generator. Features include live VLOOKUPs to pull prices from the master inventory and real-time "Stock Remaining" indicators to prevent overselling.
+3. **Inventory:** The master stock database. Uses Conditional Formatting to highlight stock statuses (Red = Out of Stock, Orange = Low Stock, Green = In Stock).
+4. **StockIn:** An automated ledger of stock additions. Features a clean, programmatic **In-Sheet Form** to add new products or top up existing ones easily.
+5. **Records:** The database of all processed invoices.
+6. **Settings:** Master configuration for company details, tax rates, prefixes, and dropdown lists for product categories.
+7. **LicenseData (Hidden):** Stores the encrypted hardware fingerprint and expiry date.
 
-- **Professional Invoice Layout** — Dark navy/blue color scheme, branded header with accent lines, alternating row colors
-- **Brand Logo Support** — Logo placeholder with `InsertLogo` / `RemoveLogo` macros (auto-scales any image)
-- **5 Action Buttons** — Print Invoice, Save As PDF, Clear Form, New Invoice, Save Record
-- **BILL TO / SHIP TO** — Dual-column client and shipping address sections
-- **Auto-Calculations** — Subtotal, Discount (%), VAT/Tax, and Grand Total with Naira (₦) formatting
-- **Payment Instructions** — Bank details pulled automatically from Settings
-- **Notes & Terms** — Configurable payment terms and conditions
-- **Records Log** — 9-column database tracking all processed invoices
-- **PDF Export** — Save invoices as PDF with file dialog
-- **Print Preview** — Review layout before printing
-- **Auto-Incrementing Invoice Numbers** — INV-0001, INV-0002, etc.
-- **Expandable Settings** — Company name, address, phone, email, bank details, VAT rate, prefix, payment terms
+## Developer Deployment Checklist
 
----
+This system includes a robust hardware locking mechanism. To deploy to a client, you must follow these steps:
 
-## Workbook Architecture
+1. Open `Module2` (License_Module) and change the salt string in `HashFingerprint()` to your own secret value.
+2. Open the workbook on the **CLIENT's machine**.
+3. Run the `GenerateLicenseForClient()` macro and copy the output key.
+4. Paste the license key into `LicenseData!B1`.
+5. Fill the client's company name in `LicenseData!B2`.
+6. Set the expiry date in `LicenseData!B3` (format: `DD-MMM-YYYY`).
+7. Fill `Settings!B2:B5` with the client's company details.
+8. Lock the VBA project: VBA Editor > Tools > VBAProject Properties > Protection.
+9. Set a VBA project password (keep this password — do NOT give it to the client).
+10. Save and close the workbook.
+11. Reopen to confirm license validation passes.
+12. Deliver the workbook to the client.
 
-| Sheet | Purpose |
-|-------|---------|
-| **Invoice** | User-facing invoice form with 5 action buttons and logo |
-| **Settings** | Company configuration, bank details, and invoice counter |
-| **Records** | 9-column invoice log database |
+## Setup Instructions
 
-### Records Sheet Columns
+If you are setting this up from scratch using the source code files:
 
-| Column | Data |
-|--------|------|
-| A | Invoice # |
-| B | Date |
-| C | Client Name |
-| D | Client Email |
-| E | Subtotal (₦) |
-| F | Discount (%) |
-| G | Tax (%) |
-| H | Total (₦) |
-| I | Status |
-
----
-
-## Development Journey
-
-This project was built through a systematic, iterative process — from initial specification to polished, production-ready system.
-
-### Phase 1 — Core Architecture & Specification
-- Defined the 3-sheet workbook structure: Invoice, Settings, Records
-- Established all cell references, named ranges (`NextInvNum`), and formula dependencies
-- Created the initial `SetupInvoiceSystem` macro to auto-build the entire workbook in one click
-- Implemented the `ProcessInvoice` macro with 7-step workflow: Validate → Capture → Export → Log → Increment → Clear → Confirm
-
-### Phase 2 — Company Configuration
-- Pre-filled Settings sheet with company details (Moresta Signature, Ondo City, Ondo State)
-- Linked all Invoice header fields to Settings via formulas for single-source-of-truth updates
-
-### Phase 3 — Bug Fixes & Error Handling
-- **Fixed Runtime Error 5**: Replaced `Chr(8358)` with `ChrW(8358)` for the Naira (₦) Unicode symbol — VBA's `Chr()` only supports 0–255
-- **Fixed PDF Export Error**: Added `ThisWorkbook.Save` before export to prevent "Document not saved" errors
-- Replaced hardcoded Desktop path with `Application.GetSaveAsFilename` dialog for reliable PDF saving
-
-### Phase 4 — UX Improvements
-- Split the single `ProcessInvoice` button into **5 separate action buttons** for granular control:
-  - `Print Invoice` — Opens print preview
-  - `Save As PDF` — File dialog for PDF export
-  - `Clear Form` — Resets all input fields with placeholder restoration
-  - `New Invoice` — Clears + increments invoice number
-  - `Save Record` — Logs to Records sheet independently
-- Added Yes/No/Cancel dialog flow before the button split for flexible output choice
-
-### Phase 5 — Premium Visual Redesign
-- Redesigned the entire Invoice layout inspired by professional invoice templates:
-  - Dark navy blue (`RGB(31,56,100)`) theme with accent blue (`RGB(68,114,196)`)
-  - Top accent stripe and bottom footer stripe for polished framing
-  - Alternating row colors with editable cell highlighting (light blue fill)
-  - BILL TO / SHIP TO dual-column section with dark navy headers
-  - Payment Instructions and Notes & Terms sections with teal/blue headers
-  - "Thank you for your business!" footer with "Generated by" branding
-- Expanded Settings sheet to 15 fields: added Phone, Website, RC Number, Bank Name, Account Name, Account Number, Sort Code, Payment Terms
-
-### Phase 6 — Records Expansion
-- Expanded Records sheet from 5 columns to **9 columns**: Invoice #, Date, Client Name, Client Email, Subtotal, Discount %, Tax %, Total, Status
-- Matches professional invoice management standards for reporting and audit trails
-
-### Phase 7 — Brand Logo System
-- Added a rounded-rectangle logo placeholder shape in the invoice header
-- Created `InsertLogo` macro — opens file dialog, inserts image, auto-scales to fit header (max 65×52px)
-- Created `RemoveLogo` macro — removes custom logo and restores the placeholder
-- Logo persists across sessions and appears in PDF exports and print output
-
-### Phase 8 — Documentation & Deployment
-- Created comprehensive README with full development journey
-- Published to GitHub repository for version control and sharing
-
----
-
-## Quick Setup
-
-### Step 1 — Create the Workbook
-1. Open **Microsoft Excel**
-2. **File → Save As** → set type to **Excel Macro-Enabled Workbook (*.xlsm)**
-3. Name it `Invoice_System.xlsm` and save
-
-### Step 2 — Import the Code
-1. Press **Alt + F11** (opens VBA Editor)
-2. **File → Import File** → select `InvoiceSystem_Setup.bas`
-3. Double-click **ThisWorkbook** in the left panel
-4. Paste the code from `ThisWorkbook_Code.cls` into the code window
-
-### Step 3 — Run Setup
-1. Click inside `SetupInvoiceSystem` in the `modSetup` module
-2. Press **F5** to run
-3. Wait for the "Setup Complete" confirmation
-4. Press **Alt + Q** to return to Excel
-5. **Ctrl + S** to save
-
-### Step 4 — Configure
-1. Go to the **Settings** sheet
-2. Update your company name, address, phone, email, bank details
-3. Click **Apply Settings**
-
-### Step 5 — Add Your Logo (Optional)
-1. In the VBA Editor, run the `InsertLogo` macro
-2. Select your company logo image (PNG, JPG, BMP, or GIF)
-3. The logo auto-scales and appears in the invoice header
-
----
-
-## Daily Usage
-
-1. Fill in the **BILL TO** section (client details)
-2. Enter **Due Date** in G6
-3. Add line items: Description, Qty, Unit Price
-4. Optionally set a **Discount %**
-5. Use the action buttons:
-
-| Button | Action |
-|--------|--------|
-| **Print Invoice** | Opens print preview |
-| **Save As PDF** | Opens save dialog for PDF |
-| **Clear Form** | Resets all inputs |
-| **New Invoice** | Clears + increments invoice # |
-| **Save Record** | Logs invoice to Records sheet |
-
----
-
-## Files
-
-| File | Description |
-|------|-------------|
-| `InvoiceSystem_Setup.bas` | Main VBA module — setup, buttons, logo macros |
-| `ThisWorkbook_Code.cls` | Workbook_Open event (disables gridlines on open) |
-| `README.md` | This documentation |
-
----
-
-## Default Configuration
-
-Pre-configured for **Moresta Signature** (Ondo City, Ondo State, Nigeria). All values are editable via the Settings sheet.
-
-## License
-
-MIT
+1. Open a blank Excel workbook and save it as an `.xlsm` file.
+2. Open the VBA Editor (`Alt + F11`).
+3. Import the 3 `.bas` files and overwrite the code in `ThisWorkbook` with the `.cls` file.
+4. Run the `SetupInvoiceSystem` macro. **WARNING: This will wipe any existing sheets.**
+5. The system will build all 6 sheets, apply named ranges, create the tables, and insert the formulas.
+6. Navigate to the `Dashboard` and insert the 4 required charts manually using the pivot table features.
